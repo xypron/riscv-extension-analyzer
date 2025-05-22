@@ -79,11 +79,7 @@ class RiscvExtensionAnalyzer:
         linux = self.linux_supported(version);
         check = self.rva23_required();
 
-        for ext in check:
-            if ext not in linux:
-                check.remove(ext)
-
-        return check
+        return SortedList(ext for ext in check if ext in linux)
 
     def check_base_isa(self, isa_string):
         """
@@ -132,15 +128,17 @@ class RiscvExtensionAnalyzer:
             'a' : ['zaamo'],
             'f' : ['zicsr'],
             'd' : ['f'],
-            'g' : ['i', 'm', 'a', 'f', 'd', 'zicsr', 'zifencei'],
             'q' : ['d'],
-            'b' : ['zba', 'zbb', 'zbs'],
             'v' : ['d'],
             'zfh' : ['zfhmin'],
-            'zkn' : ['zbkb', 'zbkc', 'zbkx', 'zkne', 'zknd', 'zknh'],
+        })
+
+        shorthand = SortedDict({
+            'b' : ['zba', 'zbb', 'zbs'],
+            'g' : ['i', 'm', 'a', 'f', 'd', 'zicsr', 'zifencei'],
             'zk' : ['zkn', 'zkr', 'zkt'],
-            'zbb' : ['zbkb'],
-            'zvbb' : ['zvkb'],
+            'zkn' : ['zbkb', 'zbkc', 'zbkx', 'zkne', 'zknd', 'zknh'],
+            'zks' : ['zbkb', 'zbkc', 'zbkx', 'zksed', 'zksh'],
             'zvkn' : ['zvkned', 'zvknhb', 'zvkb', 'zvkt'],
             'zvknc' : ['zvkn', 'zvbc'],
             'zvkng' : ['zvkn', 'zvkg'],
@@ -148,8 +146,9 @@ class RiscvExtensionAnalyzer:
             'zvksc' : ['zvks', 'zvbc'],
             'zvksg' : ['zvks', 'zvkg'],
         })
-        update = True
 
+        # Add implied extensions
+        update = True
         while update:
             update = False
             for extension in extensions:
@@ -158,6 +157,21 @@ class RiscvExtensionAnalyzer:
                         if implied not in extensions:
                             extensions.add(implied)
                             update = True
+                if update:
+                    break
+
+        # Substitute shorthand extensions
+        update = True
+        while update:
+            update = False
+            for extension in extensions:
+                if extension in shorthand:
+                    for implied in shorthand[extension]:
+                        if implied not in extensions:
+                            extensions.add(implied)
+                    extensions.remove(extension)
+                    update = True
+                    break;
 
 
     def parse_isa_string(self, isa_string):
@@ -215,7 +229,7 @@ class RiscvExtensionAnalyzer:
                 binary_content = file.read()
         except Exception:
             raise RiscvExtensionException('Can\'t read /proc/cpuinfo')
-        
+
         lines = binary_content.decode('utf-8', errors='ignore').splitlines()
         for line in lines:
             match = re.match(r'isa\s*:\s*', line)
@@ -283,13 +297,6 @@ def test_extensions():
     assert(expected == actual)
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        ARG_STRING = sys.argv[1]
-    else:
-        ARG_STRING = (
-            'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
-            'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0')
-
     try:
         RiscvExtensionAnalyzer.is_rva23_ready()
         sys.exit(0)
