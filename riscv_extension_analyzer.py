@@ -17,8 +17,6 @@ Version: 0.0.1
 
 import sys
 import re
-import re
-import sortedcontainers
 from sortedcontainers import SortedDict, SortedList
 
 class RiscvExtensionException(RuntimeError):
@@ -82,6 +80,13 @@ class RiscvExtensionAnalyzer:
         return bitness, remainder
 
     def add_implied_extensions(self, extensions):
+        """
+        Adds implied extensions
+
+        Args:
+            extensions: iterable of extensions
+        """
+
         implies = SortedDict({
             'm' : ['zmmul'],
             'f' : ['zicsr'],
@@ -91,15 +96,28 @@ class RiscvExtensionAnalyzer:
             'b' : ['zba', 'zbb', 'zbs'],
             'v' : ['d'],
         })
-
-
         update = True
 
         while update:
             update = False
+            for extension in extensions:
+                if extension in implies:
+                    for implied in implies[extension]:
+                        if implied not in extensions:
+                            extensions.add(implied)
+                            update = True
 
 
     def parse_extensions(self, isa_string):
+        """
+        Parse RISC-V ISA string
+
+        args:
+            isa_string: ISA string without base ISA (e.g. rv64)
+
+        Raises:
+            RiscvExtException: If the provided ISA string is invalid.
+        """
         multi_character = False
 
         extensions = SortedList()
@@ -109,7 +127,7 @@ class RiscvExtensionAnalyzer:
                 isa_string = isa_string[1:]
                 if not isa_string:
                     raise RiscvExtensionException('Missing extension')
-            elif multi_character == True:
+            elif multi_character:
                 raise RiscvExtensionException('Expecting underscore')
             if isa_string[0] in 'sxz':
                 multi_character = True
@@ -128,7 +146,7 @@ class RiscvExtensionAnalyzer:
                 if not match:
                     match = re.search(r'\d+$', extension)
                 if match:
-                    version = extension[match.start()]
+                    # version = extension[match.start()]
                     extension = extension[:match.start()]
             if not extension:
                 raise RiscvExtensionException('Zero length extension')
@@ -156,16 +174,19 @@ class RiscvExtensionAnalyzer:
         print(f'{bitness}')
         print(extensions)
 
-"""
-Test strings:
+def test_parse():
+    """
+    Test strings:
 
-RV32IMACZicsr_Zifencei
-"""
+    RV32IMACZicsr_Zifencei
+    """
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         ARG_STRING = sys.argv[1]
     else:
-        ARG_STRING = 'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0'
+        ARG_STRING = (
+            'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
+            'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0')
 
     ext = RiscvExtensionAnalyzer(ARG_STRING)
