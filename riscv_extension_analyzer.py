@@ -16,7 +16,10 @@ Version: 0.0.1
 """
 
 import sys
-
+import re
+import re
+import sortedcontainers
+from sortedcontainers import SortedDict, SortedList
 
 class RiscvExtensionException(RuntimeError):
     """
@@ -41,6 +44,8 @@ class RiscvExtensionAnalyzer:
     This class provides functionality to analyze and parse RISC-V extension
     strings.
     """
+
+    CANONICAL_ORDER = 'imafdqlcbkjtpvh'
 
     def check_base_isa(self, isa_string):
         """
@@ -72,9 +77,67 @@ class RiscvExtensionAnalyzer:
                 break
 
         if bitness is None:
-            raise RiscvExtensionException('Invalid start')
+            raise RiscvExtensionException('Invalid base ISA')
 
         return bitness, remainder
+
+    def add_implied_extensions(self, extensions):
+        implies = SortedDict({
+            'm' : ['zmmul'],
+            'f' : ['zicsr'],
+            'd' : ['f'],
+            'g' : ['i', 'm', 'a', 'f', 'd', 'zicsr', 'zifencei'],
+            'q' : ['d'],
+            'b' : ['zba', 'zbb', 'zbs'],
+            'v' : ['d'],
+        })
+
+
+        update = True
+
+        while update:
+            update = False
+
+
+    def parse_extensions(self, isa_string):
+        multi_character = False
+
+        extensions = SortedList()
+
+        while len(isa_string) > 0:
+            if isa_string.startswith('_'):
+                isa_string = isa_string[1:]
+                if not isa_string:
+                    raise RiscvExtensionException('Missing extension')
+            elif multi_character == True:
+                raise RiscvExtensionException('Expecting underscore')
+            if isa_string[0] in 'sxz':
+                multi_character = True
+            if multi_character:
+                match = re.match(r'^[^_]+', isa_string)
+            else:
+                match = re.match(r'^\D\d+p\d+|\D\d+|\D', isa_string)
+            if not match:
+                raise RiscvExtensionException('Expecting extension')
+            extension = match.group()
+            isa_string = isa_string[match.end():]
+            # These extensions are not versioned.
+            if extension not in {'sv32', 'sv39', 'sv48', 'sv59'}:
+                # Check for version number.
+                match = re.search(r'\d+p\d+$', extension)
+                if not match:
+                    match = re.search(r'\d+$', extension)
+                if match:
+                    version = extension[match.start()]
+                    extension = extension[:match.start()]
+            if not extension:
+                raise RiscvExtensionException('Zero length extension')
+
+            extensions.add(extension)
+
+        self.add_implied_extensions(extensions)
+
+        return extensions
 
     def __init__(self, isa_string):
         """
@@ -89,8 +152,15 @@ class RiscvExtensionAnalyzer:
 
         isa_string = isa_string.lower()
         bitness, remainder = self.check_base_isa(isa_string)
-        print(f'{bitness}, {remainder}')
+        extensions = self.parse_extensions(remainder)
+        print(f'{bitness}')
+        print(extensions)
 
+"""
+Test strings:
+
+RV32IMACZicsr_Zifencei
+"""
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
