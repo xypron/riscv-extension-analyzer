@@ -209,9 +209,31 @@ class RiscvExtensionAnalyzer:
 
         return extensions
 
+    def read_cpuinfo():
+        try:
+            with open('/proc/cpuinfo', 'rb') as file:
+                binary_content = file.read()
+        except Exception:
+            raise RiscvExtensionException('Can\'t read /proc/cpuinfo')
+        
+        lines = binary_content.decode('utf-8', errors='ignore').splitlines()
+        for line in lines:
+            match = re.match(r'isa\s*:\s*', line)
+            if match:
+                return RiscvExtensionAnalyzer(line[match.end():])
+
+        raise RiscvExtensionException('No isa information')
+
+    def is_rva23_ready(version = None):
+        cpuinfo = RiscvExtensionAnalyzer.read_cpuinfo()
+        check = cpuinfo.rva23_to_check(version)
+        for ext in check:
+            if ext not in cpuinfo.extensions:
+                raise RiscvExtensionException(f'Missing extension {ext}')
+
     def __init__(self, isa_string):
         """
-        Initializes a RiscvExtensionAnalyzer objectwith a given RISC-V ISA string.
+        Initializes a RiscvExtensionAnalyzer object with a given RISC-V ISA string.
 
         Args:
             isa_string (str): The RISC-V ISA string to analyze.
@@ -268,19 +290,12 @@ if __name__ == '__main__':
             'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
             'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0')
 
-    ext = RiscvExtensionAnalyzer(ARG_STRING)
-    print(f'Bitness {ext.bitness}')
-    print(f'Extensions {list(ext.extensions)}')
-
-    print('\n')
-    linux = ext.linux_supported(None);
-    print(f'Linux 6.14 {list(linux)}');
-
-    print('\n')
-    rva23 = ext.rva23_required();
-    print(f'RVA23 {list(rva23)}')
-
-    print('\n')
-    check = ext.rva23_to_check(None)
-    print(f'Check {list(check)}')
-
+    try:
+        RiscvExtensionAnalyzer.is_rva23_ready()
+        sys.exit(0)
+    except RiscvExtensionException as ex:
+        print(ex)
+        sys.exit(1)
+    except Exception as ex:
+        print(ex)
+        sys.exit(2)
