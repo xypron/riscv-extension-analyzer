@@ -46,6 +46,15 @@ class RiscvExtensionAnalyzer:
     CANONICAL_ORDER = 'imafdqlcbkjtpvh'
 
     def linux_supported(self):
+        """
+        Gets the extensions published by the Linux kernel
+
+        Returns: List of extensions
+
+        Raises:
+            RiscvExtException: If the provided ISA string is invalid.
+        """
+
         linux_6_14 = SortedList([
 			'i', 'm', 'a', 'f', 'd', 'q', 'c', 'v', 'zicbom', 'zicboz',
 			'ziccrse', 'zicntr', 'zicond', 'zicsr', 'zifencei',
@@ -63,6 +72,15 @@ class RiscvExtensionAnalyzer:
         return linux_6_14
 
     def rva23_required(self):
+        """
+        Gets the extensions required for RVA23
+
+        Returns: List of extensions
+
+        Raises:
+            RiscvExtException: If the provided ISA string is invalid.
+        """
+
         rva23 = SortedList({
 			'i', 'm', 'a', 'f', 'd', 'c', 'b', 'v', 'zic64b',
 			'zicbom', 'zicbop', 'zicboz', 'ziccamoa', 'ziccif', 'zicclsm',
@@ -76,6 +94,15 @@ class RiscvExtensionAnalyzer:
         return rva23
 
     def rva23_to_check(self):
+        """
+        Gets the required RVA23 extensions published by the Linux kernel
+
+        Returns: List of extensions
+
+        Raises:
+            RiscvExtException: If the provided ISA string is invalid.
+        """
+
         linux = self.linux_supported()
         check = self.rva23_required()
 
@@ -225,6 +252,15 @@ class RiscvExtensionAnalyzer:
 
     @staticmethod
     def read_cpuinfo():
+        """
+        Gets the extensions listed in /proc/cpuinfo as common for all harts
+
+        Returns: List of extensions
+
+        Raises:
+            RiscvExtException: If the ISA string is invalid or cannot be found
+        """
+
         try:
             with open('/proc/cpuinfo', 'rb') as file:
                 binary_content = file.read()
@@ -237,10 +273,17 @@ class RiscvExtensionAnalyzer:
             if match:
                 return RiscvExtensionAnalyzer(line[match.end():])
 
-        raise RiscvExtensionException('No isa information')
+        raise RiscvExtensionException('No ISA information')
 
     @staticmethod
-    def is_rva23_ready()
+    def is_rva23_ready():
+        """
+        Check if the system is RVA23 ready
+
+        Raises:
+            RiscvExtException: If the system is not RVA23 ready
+        """
+
         cpuinfo = RiscvExtensionAnalyzer.read_cpuinfo()
         check = cpuinfo.rva23_to_check()
         for ext in check:
@@ -301,10 +344,8 @@ def test_extensions():
 if __name__ == '__main__':
     try:
         RiscvExtensionAnalyzer.is_rva23_ready()
+        print('The system is RVA23 read')
         sys.exit(0)
     except RiscvExtensionException as ex:
         print(ex)
         sys.exit(1)
-    except OSError as ex:
-        print(ex)
-        sys.exit(2)
