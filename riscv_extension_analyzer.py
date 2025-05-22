@@ -340,7 +340,7 @@ def test_extensions():
 if __name__ == '__main__':
     try:
         RiscvExtensionAnalyzer.is_rva23_ready()
-        print('The system is RVA23 read')
+        print('The system is RVA23 ready')
         sys.exit(0)
     except RiscvExtensionException as ex:
         print(ex)
