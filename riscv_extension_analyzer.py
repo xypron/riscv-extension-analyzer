@@ -43,8 +43,6 @@ class RiscvExtensionAnalyzer:
     strings.
     """
 
-    CANONICAL_ORDER = 'imafdqlcbkjtpvh'
-
     def linux_supported(self):
         """
         Gets the extensions published by the Linux kernel
