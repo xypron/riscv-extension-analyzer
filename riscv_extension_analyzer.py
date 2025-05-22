@@ -45,9 +45,9 @@ class RiscvExtensionAnalyzer:
 
     CANONICAL_ORDER = 'imafdqlcbkjtpvh'
 
-    def linx_supported(self, version):
+    def linux_supported(self, version):
         linux_6_14 = SortedList([
-			'i', 'm', 'a', 'f', 'd', 'q', 'c', 'v', 'h', 'zicbom', 'zicboz',
+			'i', 'm', 'a', 'f', 'd', 'q', 'c', 'v', 'zicbom', 'zicboz',
 			'ziccrse', 'zicntr', 'zicond', 'zicsr', 'zifencei',
 			'zihintntl', 'zihintpause', 'zihpm', 'zimop', 'zabha', 'zacas',
 			'zawrs', 'zfa', 'zfh', 'zfhmin', 'zca', 'zcb', 'zcd', 'zcf',
@@ -56,10 +56,34 @@ class RiscvExtensionAnalyzer:
 			'zksed', 'zksh', 'ztso', 'zvbb', 'zvbc', 'zve32f', 'zve32x',
 			'zve64d', 'zve64f', 'zve64x', 'zvfh', 'zvfhmin', 'zvkb', 'zvkg',
 			'zvkn', 'zvknc', 'zvkned', 'zvkng', 'zvknha', 'zvknhb', 'zvks',
-			'zvksc', 'zvksed', 'zvksh', 'zvksg', 'zvkt', 'smaia', 'smmpm',
-			'smnpm', 'smstateen', 'ssaia', 'sscofpmf', 'ssnpm', 'sstc',
-			'svade', 'svadu', 'svinval', 'svnapot', 'svpbmt', 'svvptc'
+			'zvksc', 'zvksed', 'zvksh', 'zvksg', 'zvkt'
             ])
+        self.add_implied_extensions(linux_6_14)
+
+        return linux_6_14
+
+    def rva23_required(self):
+        rva23 = SortedList({
+			'i', 'm', 'a', 'f', 'd', 'c', 'b', 'v', 'zic64b',
+			'zicbom', 'zicbop', 'zicboz', 'ziccamoa', 'ziccif', 'zicclsm',
+			'ziccrse', 'zicntr', 'zicond', 'zicsr', 'zifencei',
+			'zihintntl', 'zihintpause', 'zihpm', 'zimop', 'za64rs',
+			'zawrs', 'zfa', 'zfbfmin', 'zfhmin', 'zcb', 'zcmop', 'zba',
+			'zbb', 'zbs', 'zvbb', 'zvfhmin', 'zvkt', 'zkn', 'zkr', 'zkt'
+            })
+        self.add_implied_extensions(rva23)
+
+        return rva23
+
+    def rva23_to_check(self, version):
+        linux = self.linux_supported(version);
+        check = self.rva23_required();
+
+        for ext in check:
+            if ext not in linux:
+                check.remove(ext)
+
+        return check
 
     def check_base_isa(self, isa_string):
         """
@@ -247,3 +271,16 @@ if __name__ == '__main__':
     ext = RiscvExtensionAnalyzer(ARG_STRING)
     print(f'Bitness {ext.bitness}')
     print(f'Extensions {list(ext.extensions)}')
+
+    print('\n')
+    linux = ext.linux_supported(None);
+    print(f'Linux 6.14 {list(linux)}');
+
+    print('\n')
+    rva23 = ext.rva23_required();
+    print(f'RVA23 {list(rva23)}')
+
+    print('\n')
+    check = ext.rva23_to_check(None)
+    print(f'Check {list(check)}')
+
