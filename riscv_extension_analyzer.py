@@ -45,7 +45,7 @@ class RiscvExtensionAnalyzer:
 
     CANONICAL_ORDER = 'imafdqlcbkjtpvh'
 
-    def linux_supported(self, version):
+    def linux_supported(self):
         linux_6_14 = SortedList([
 			'i', 'm', 'a', 'f', 'd', 'q', 'c', 'v', 'zicbom', 'zicboz',
 			'ziccrse', 'zicntr', 'zicond', 'zicsr', 'zifencei',
@@ -75,9 +75,9 @@ class RiscvExtensionAnalyzer:
 
         return rva23
 
-    def rva23_to_check(self, version):
-        linux = self.linux_supported(version);
-        check = self.rva23_required();
+    def rva23_to_check(self):
+        linux = self.linux_supported()
+        check = self.rva23_required()
 
         return SortedList(ext for ext in check if ext in linux)
 
@@ -171,7 +171,7 @@ class RiscvExtensionAnalyzer:
                             extensions.add(implied)
                     extensions.remove(extension)
                     update = True
-                    break;
+                    break
 
 
     def parse_isa_string(self, isa_string):
@@ -223,12 +223,13 @@ class RiscvExtensionAnalyzer:
 
         return extensions
 
+    @staticmethod
     def read_cpuinfo():
         try:
             with open('/proc/cpuinfo', 'rb') as file:
                 binary_content = file.read()
-        except Exception:
-            raise RiscvExtensionException('Can\'t read /proc/cpuinfo')
+        except Exception as ex:
+            raise RiscvExtensionException('Can\'t read /proc/cpuinfo') from ex
 
         lines = binary_content.decode('utf-8', errors='ignore').splitlines()
         for line in lines:
@@ -238,9 +239,10 @@ class RiscvExtensionAnalyzer:
 
         raise RiscvExtensionException('No isa information')
 
-    def is_rva23_ready(version = None):
+    @staticmethod
+    def is_rva23_ready()
         cpuinfo = RiscvExtensionAnalyzer.read_cpuinfo()
-        check = cpuinfo.rva23_to_check(version)
+        check = cpuinfo.rva23_to_check()
         for ext in check:
             if ext not in cpuinfo.extensions:
                 raise RiscvExtensionException(f'Missing extension {ext}')
@@ -266,11 +268,11 @@ def test_bitness():
     """
     actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').bitness
     expected = 32
-    assert(expected == actual)
+    assert expected == actual
 
     actual = RiscvExtensionAnalyzer('rv64gcsv39').bitness
     expected = 64
-    assert(expected == actual)
+    assert expected == actual
 
 def test_extensions():
     """
@@ -278,23 +280,23 @@ def test_extensions():
     """
     actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').extensions
     expected = SortedList(['a', 'c', 'i', 'm', 'zicsr', 'zifencei', 'zmmul'])
-    assert(expected == actual)
+    assert expected == actual
 
     actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').bitness
     expected = 32
-    assert(expected == actual)
+    assert expected == actual
 
     actual = RiscvExtensionAnalyzer(
             'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
             'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0').extensions
     expected = SortedList(['a', 'c', 'd', 'f', 'i', 'm', 'zaamo', 'zalrsc',
                             'zicsr', 'zifencei', 'zmmul'])
-    assert(expected == actual)
+    assert expected == actual
 
     actual = RiscvExtensionAnalyzer('rv64gcsv39').extensions
     expected = SortedList(['a', 'c', 'd', 'f', 'g', 'i', 'm', 'sv39',
                             'zicsr', 'zifencei', 'zmmul'])
-    assert(expected == actual)
+    assert expected == actual
 
 if __name__ == '__main__':
     try:
@@ -303,6 +305,6 @@ if __name__ == '__main__':
     except RiscvExtensionException as ex:
         print(ex)
         sys.exit(1)
-    except Exception as ex:
+    except OSError as ex:
         print(ex)
         sys.exit(2)
