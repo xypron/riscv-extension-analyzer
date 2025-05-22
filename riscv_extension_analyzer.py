@@ -45,6 +45,22 @@ class RiscvExtensionAnalyzer:
 
     CANONICAL_ORDER = 'imafdqlcbkjtpvh'
 
+    def linx_supported(self, version):
+        linux_6_14 = SortedList([
+			'i', 'm', 'a', 'f', 'd', 'q', 'c', 'v', 'h', 'zicbom', 'zicboz',
+			'ziccrse', 'zicntr', 'zicond', 'zicsr', 'zifencei',
+			'zihintntl', 'zihintpause', 'zihpm', 'zimop', 'zabha', 'zacas',
+			'zawrs', 'zfa', 'zfh', 'zfhmin', 'zca', 'zcb', 'zcd', 'zcf',
+			'zcmop', 'zba', 'zbb', 'zbc', 'zbkb', 'zbkc', 'zbkx', 'zbs',
+			'zk', 'zkn', 'zknd', 'zkne', 'zknh', 'zkr', 'zks', 'zkt',
+			'zksed', 'zksh', 'ztso', 'zvbb', 'zvbc', 'zve32f', 'zve32x',
+			'zve64d', 'zve64f', 'zve64x', 'zvfh', 'zvfhmin', 'zvkb', 'zvkg',
+			'zvkn', 'zvknc', 'zvkned', 'zvkng', 'zvknha', 'zvknhb', 'zvks',
+			'zvksc', 'zvksed', 'zvksh', 'zvksg', 'zvkt', 'smaia', 'smmpm',
+			'smnpm', 'smstateen', 'ssaia', 'sscofpmf', 'ssnpm', 'sstc',
+			'svade', 'svadu', 'svinval', 'svnapot', 'svpbmt', 'svvptc'
+            ])
+
     def check_base_isa(self, isa_string):
         """
         Checks the base instruction set architecture (ISA) provided by a
@@ -89,12 +105,24 @@ class RiscvExtensionAnalyzer:
 
         implies = SortedDict({
             'm' : ['zmmul'],
+            'a' : ['zaamo'],
             'f' : ['zicsr'],
             'd' : ['f'],
             'g' : ['i', 'm', 'a', 'f', 'd', 'zicsr', 'zifencei'],
             'q' : ['d'],
             'b' : ['zba', 'zbb', 'zbs'],
             'v' : ['d'],
+            'zfh' : ['zfhmin'],
+            'zkn' : ['zbkb', 'zbkc', 'zbkx', 'zkne', 'zknd', 'zknh'],
+            'zk' : ['zkn', 'zkr', 'zkt'],
+            'zbb' : ['zbkb'],
+            'zvbb' : ['zvkb'],
+            'zvkn' : ['zvkned', 'zvknhb', 'zvkb', 'zvkt'],
+            'zvknc' : ['zvkn', 'zvbc'],
+            'zvkng' : ['zvkn', 'zvkg'],
+            'zvks' : ['zvksed', 'zvksh', 'zvkb', 'zvkt'],
+            'zvksc' : ['zvks', 'zvbc'],
+            'zvksg' : ['zvks', 'zvkg'],
         })
         update = True
 
