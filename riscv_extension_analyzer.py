@@ -71,7 +71,7 @@ class RiscvExtensionAnalyzer:
 
     def rva23_required(self):
         """
-        Gets the extensions required for RVA23
+        Gets the mandatory extensions for the RVA23U64 profile
 
         Returns: List of extensions
 
