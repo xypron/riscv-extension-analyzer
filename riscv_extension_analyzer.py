@@ -169,17 +169,44 @@ class RiscvExtensionAnalyzer:
         """
 
         isa_string = isa_string.lower()
-        bitness, remainder = self.check_base_isa(isa_string)
-        extensions = self.parse_isa_string(remainder)
-        print(f'{bitness}')
-        print(extensions)
+        self.bitness, remainder = self.check_base_isa(isa_string)
+        self.extensions = self.parse_isa_string(remainder)
 
-def test_parse():
+def test_bitness():
     """
-    Test strings:
+    Test bitness
+    """
+    actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').bitness
+    expected = 32
+    assert(expected == actual)
 
-    RV32IMACZicsr_Zifencei
+    actual = RiscvExtensionAnalyzer('rv64gcsv39').bitness
+    expected = 64
+    assert(expected == actual)
+
+def test_extensions():
     """
+    Test extensions
+    """
+    actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').extensions
+    expected = SortedList(['a', 'c', 'i', 'm', 'zicsr', 'zifencei', 'zmmul'])
+    assert(expected == actual)
+
+    actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').bitness
+    expected = 32
+    assert(expected == actual)
+
+    actual = RiscvExtensionAnalyzer(
+            'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
+            'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0').extensions
+    expected = SortedList(['a', 'c', 'd', 'f', 'i', 'm', 'zaamo', 'zalrsc',
+                            'zicsr', 'zifencei', 'zmmul'])
+    assert(expected == actual)
+
+    actual = RiscvExtensionAnalyzer('rv64gcsv39').extensions
+    expected = SortedList(['a', 'c', 'd', 'f', 'g', 'i', 'm', 'sv39',
+                            'zicsr', 'zifencei', 'zmmul'])
+    assert(expected == actual)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -190,3 +217,5 @@ if __name__ == '__main__':
             'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0')
 
     ext = RiscvExtensionAnalyzer(ARG_STRING)
+    print(f'Bitness {ext.bitness}')
+    print(f'Extensions {list(ext.extensions)}')
