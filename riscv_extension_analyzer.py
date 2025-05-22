@@ -108,7 +108,7 @@ class RiscvExtensionAnalyzer:
                             update = True
 
 
-    def parse_extensions(self, isa_string):
+    def parse_isa_string(self, isa_string):
         """
         Parse RISC-V ISA string
 
@@ -170,7 +170,7 @@ class RiscvExtensionAnalyzer:
 
         isa_string = isa_string.lower()
         bitness, remainder = self.check_base_isa(isa_string)
-        extensions = self.parse_extensions(remainder)
+        extensions = self.parse_isa_string(remainder)
         print(f'{bitness}')
         print(extensions)
 
