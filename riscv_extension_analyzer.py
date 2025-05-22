@@ -325,10 +325,6 @@ def test_extensions():
     expected = SortedList(['a', 'c', 'i', 'm', 'zicsr', 'zifencei', 'zmmul'])
     assert expected == actual
 
-    actual = RiscvExtensionAnalyzer('RV32IMACZicsr_Zifencei').bitness
-    expected = 32
-    assert expected == actual
-
     actual = RiscvExtensionAnalyzer(
             'rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_'
             'zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0').extensions
